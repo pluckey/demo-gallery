@@ -1,46 +1,45 @@
 # Demo gallery
 
-Small AI experiments, each in its own folder and runnable on its own. Some are useful, some are just fun.
-
-## Jev demos
-
-[Jev](https://openrouter.ai/docs/guides/community/jev-tutorial) (TypeSafe's `typesafe/jev-1.13`) is a decision
-model: instead of writing text it answers typed questions (pick one of these, yes/no, score on this scale) with
-calibrated probabilities, in about 200 ms, for fractions of a cent. These demos call it through OpenRouter.
-
-Each one is plain Node (18+) with no dependencies: a tiny server that keeps your OpenRouter key on your machine, and a
-single page.
+Small AI experiments in one dark-mode app. Every demo follows the same simple pattern: **pick an example from a few big
+buttons, watch the mechanism work in plain steps, get one big result.**
 
 ```
-cd jev-flow                                  # or jev-cascade, jev-coach
-OPENROUTER_API_KEY=sk-or-… node server.js    # or: node server.js --env path/to/.env
-node test.js                                 # each engine against a fake Jev, no key needed
+npm install
+echo "OPENROUTER_API_KEY=sk-or-…" > .env     # git-ignored; or export the variable
+npm run dev                                   # http://localhost:8790
+npm test                                      # engine tests, no key needed
+npm run build && npm start                    # production: one Node server for the app and the API
 ```
 
-### [jev-cascade](jev-cascade): is this text a scam?
+## What's inside
 
-A cascade of small Jev questions (what kind of message, is it pushing urgency, does the link look fake, does it ask for
-money) that ends in *Looks fine*, *Be careful* or *Looks like a scam*. Shaky answers are routed somewhere safer, and the
-whole cascade is editable JSON. Compares asking one question per call with asking all of them in one call.
+**Jev** ([TypeSafe's decision model](https://openrouter.ai/docs/guides/community/jev-tutorial): typed answers with how
+sure it is, in about 0.2 seconds, for fractions of a cent)
 
-<img src="jev-cascade/screenshot.png" width="720" alt="Scam check: a Chase fraud-alert text walked through five decision nodes to 'Be careful'">
+- **Scam check**: a text message goes through a few small questions (what kind of message, does it want an action, is the
+  link fake, how much pressure, does it ask for money) to *Looks fine*, *Be careful* or *Looks like a scam*.
+- **Claim triage**: an insurance claim walks a 14-question decision tree, drawn with React Flow, to one of 10 desks.
+- **Writing coach**: a checklist that fills in while an incident report is written. Jev only says what's missing; it
+  never writes for the author.
 
-### [jev-flow](jev-flow): insurance claim triage as a decision tree
+## How it's built
 
-A first notice of loss goes through up to 14 typed questions (coverage line, injury, severity, fraud red flags,
-catastrophe, habitability, loss size, litigation) to one of 10 desks, drawn as a React Flow tree that lights up as Jev
-answers. Eight realistic example claims; asking every question in one call is about 3.5× faster for the same cost.
+- Vite, React, TypeScript, Tailwind and [shadcn/ui](https://ui.shadcn.com), dark by default.
+- `server/api.ts` is the only code that sees the OpenRouter key. It serves two routes that every demo uses:
+  `POST /api/jev/decide` (Jev) and `POST /api/chat` (any OpenRouter chat model, with a token cap). It runs inside the
+  Vite dev server and in `server/index.ts` for production.
+- `src/demos/registry.ts` lists the demos; the sidebar and home page are built from it.
+- `src/components/demo-kit.tsx` holds the shared pieces: numbered steps, chunky example buttons, confidence bars,
+  the verdict card.
+- `src/demos/jev/engine/` holds the pure decision engines (a cascade of typed questions, and the live coaching
+  checklist), tested in `engine.test.ts`.
 
-<img src="jev-flow/screenshot.png" width="720" alt="Claims triage tree with the path for a burst-pipe claim highlighted, ending at Fast track">
+## Adding a demo
 
-### [jev-coach](jev-coach): live coaching on a narrative field
-
-An incident report's "What happened?" box with a checklist that fills in as you type: when, where, who, what they were
-doing, how it happened, what contributed, witnesses, what was done after, plus injury follow-ups and a blame-language
-warning. Jev only says what's missing; it never writes for the author. Press *Replay typing* to watch a weak draft
-improve.
-
-<img src="jev-coach/screenshot.png" width="720" alt="Incident narrative with all ten checklist items covered">
+1. Make a folder under `src/demos/<category>/` with a component that uses the demo kit and calls `/api/jev/decide` or
+   `/api/chat`.
+2. Add an entry to `src/demos/registry.ts` (and a category there if it's new).
+3. Keep it to a few big choices and one clear result.
 
 ## License
 
