@@ -1,5 +1,5 @@
 // The shared shape of every demo: a plain-words intent, numbered steps, big chunky choices, one big result.
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,17 @@ export const toneClass: Record<Tone, string> = {
 
 export function DemoPage({ title, intent, how, children }: { title: string; intent: string; how: string; children: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-5 md:px-8">
-      <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
-      <p className="mt-1 max-w-4xl text-base text-muted-foreground md:text-lg">{intent}</p>
-      <details className="mt-2 max-w-4xl text-sm text-muted-foreground">
-        <summary className="cursor-pointer select-none hover:text-foreground">How it works</summary>
-        <p className="mt-2 leading-relaxed">{how}</p>
-      </details>
-      <div className="mt-6 space-y-6">{children}</div>
+    // Wide screens: exactly the height of the scroll area, so the demo's own panels scroll instead of the page.
+    <div className="mx-auto flex w-full max-w-7xl flex-col px-4 py-4 md:px-8 lg:h-full lg:py-5">
+      <div className="shrink-0">
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
+        <p className="mt-1 max-w-4xl text-sm text-muted-foreground md:text-base">{intent}</p>
+        <details className="mt-1.5 max-w-4xl text-sm text-muted-foreground">
+          <summary className="cursor-pointer select-none hover:text-foreground">How it works</summary>
+          <p className="mt-2 leading-relaxed">{how}</p>
+        </details>
+      </div>
+      <div className="mt-4 flex flex-col gap-5 lg:min-h-0 lg:flex-1">{children}</div>
     </div>
   );
 }
@@ -71,7 +74,7 @@ export function ConfidenceBar({ value, tone = "neutral" }: { value: number; tone
 
 export function Verdict({ label, say, tone }: { label: string; say?: string; tone: Tone }) {
   return (
-    <Card className={cn("animate-in fade-in zoom-in-95 gap-1 rounded-3xl border-2 p-5", toneClass[tone])}>
+    <Card data-verdict className={cn("animate-in fade-in zoom-in-95 gap-1 rounded-3xl border-2 p-5", toneClass[tone])}>
       <div className="text-2xl font-bold md:text-3xl">{label}</div>
       {say && <div className="text-base opacity-90">{say}</div>}
     </Card>
@@ -85,4 +88,11 @@ export function Meta({ items }: { items: (string | false | null | undefined)[] }
 
 export function Problem({ message }: { message: string }) {
   return <Card className={cn("rounded-2xl border p-4", toneClass.bad)}>{message}</Card>;
+}
+
+/** Keep the newest thing in view: scrolls whichever container holds it (a panel on wide screens, the page on phones). */
+export function useFollow(deps: unknown[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { ref.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, deps);  // eslint-disable-line react-hooks/exhaustive-deps
+  return ref;
 }

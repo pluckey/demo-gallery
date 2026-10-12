@@ -3,7 +3,7 @@ import { FileText, PencilLine } from "lucide-react";
 import dagre from "@dagrejs/dagre";
 import { Background, Controls, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider, useReactFlow, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ChunkyButton, DemoPage, Meta, Problem, StepLabel, toneClass, Verdict, type Tone } from "@/components/demo-kit";
+import { ChunkyButton, DemoPage, Meta, Problem, StepLabel, toneClass, useFollow, Verdict, type Tone } from "@/components/demo-kit";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -163,24 +163,27 @@ export default function ClaimsDemo() {
   }
 
   const outcome = result && spec.outcomes[result.outcome];
+  const treeEnd = useFollow([picked]), sideEnd = useFollow([result, error]);
   return (
     <DemoPage
       title="Where should this claim go?"
-      intent="Pick an insurance claim. It walks the decision tree on the right, one question at a time, until it reaches the desk that should handle it."
+      intent="Pick an insurance claim. It walks the decision tree one question at a time until it reaches the desk that should handle it."
       how="Each box in the tree is one typed question for Jev: which kind of coverage, was anyone hurt, how badly, are there fraud red flags, is the home livable, is a lawyer involved. Jev's answer picks the branch. Fourteen questions and ten possible desks, but a claim only ever walks one path, usually two to six questions."
     >
-      <section>
-        <StepLabel n={1}>Pick a claim</StepLabel>
-        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-5">
-          {spec.examples.map((ex, i) => (
-            <ChunkyButton key={i} compact icon={FileText} title={ex.title} active={picked === i} onClick={() => { setPicked(i); decide(ex.text); }} />
-          ))}
-          <ChunkyButton compact icon={PencilLine} title="Write your own" active={picked === "own"} onClick={() => setPicked("own")} />
-        </div>
-      </section>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <section>
+      {/* Phones: claims, tree, then where it goes. Wide screens: claims and result in a left column that scrolls on its
+          own, the tree using the full height on the right. The wrapper dissolves on phones (contents) so its parts can reorder. */}
+      <div className="grid gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+        <div className="contents lg:block lg:min-h-0 lg:space-y-5 lg:overflow-y-auto lg:pr-1">
+          <section className="order-1">
+            <StepLabel n={1}>Pick a claim</StepLabel>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+              {spec.examples.map((ex, i) => (
+                <ChunkyButton key={i} compact icon={FileText} title={ex.title} active={picked === i} onClick={() => { setPicked(i); decide(ex.text); }} />
+              ))}
+              <ChunkyButton compact icon={PencilLine} title="Write your own" active={picked === "own"} onClick={() => setPicked("own")} />
+            </div>
+          </section>
+          <div className="order-3 space-y-4">
             {picked === "own" && (
               <Card className="gap-3 rounded-2xl p-4">
                 <Textarea autoFocus value={own} onChange={(e) => setOwn(e.target.value)} className="min-h-32 text-base" placeholder="Describe what happened…" />
@@ -188,24 +191,25 @@ export default function ClaimsDemo() {
               </Card>
             )}
             {typeof picked === "number" && (
-              <Card className="rounded-2xl p-4 text-sm leading-relaxed"><div className="text-muted-foreground">The claim</div>“{spec.examples[picked].text}”</Card>
+              <Card className="gap-1 rounded-2xl p-4 text-sm leading-relaxed"><div className="text-muted-foreground">The claim</div>“{spec.examples[picked].text}”</Card>
             )}
-            {picked === null && <Card className="rounded-2xl border-dashed p-6 text-center text-muted-foreground">Pick a claim above.</Card>}
-          </section>
-          {outcome && result && (
-            <section>
-              <StepLabel n={3}>Goes to</StepLabel>
-              <Verdict label={outcome.label} say={outcome.say} tone={outcome.tone} />
-              <div className="mt-3"><Meta items={[`${trace.length} questions`, `${(result.ms / 1000).toFixed(1)} s`, `$${result.cost.toFixed(5)}`]} /></div>
-            </section>
-          )}
-          {error && <Problem message={error} />}
+            {outcome && result && (
+              <section>
+                <StepLabel n={3}>Goes to</StepLabel>
+                <Verdict label={outcome.label} say={outcome.say} tone={outcome.tone} />
+                <div className="mt-2"><Meta items={[`${trace.length} questions`, `${(result.ms / 1000).toFixed(1)} s`, `$${result.cost.toFixed(5)}`]} /></div>
+              </section>
+            )}
+            {error && <Problem message={error} />}
+            <div ref={sideEnd} />
+          </div>
         </div>
-        <section className="min-w-0">
+        <section className="order-2 flex min-w-0 flex-col">
           <StepLabel n={2}>Watch it walk the tree</StepLabel>
-          <Card className="h-[max(380px,calc(100svh-450px))] overflow-hidden rounded-2xl p-0">
+          <Card className="h-[62svh] min-h-80 overflow-hidden rounded-2xl p-0 lg:h-auto lg:min-h-0 lg:flex-1">
             <ReactFlowProvider><Tree trace={trace} asking={asking} outcome={result?.outcome ?? null} /></ReactFlowProvider>
           </Card>
+          <div ref={treeEnd} />
         </section>
       </div>
     </DemoPage>

@@ -55,16 +55,19 @@ export function App() {
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur">
+        <SidebarInset className="h-svh overflow-hidden">
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
             <SidebarTrigger />
             <span className="text-sm text-muted-foreground">{demo ? `${demo.category} / ${demo.title}` : "All demos"}</span>
           </header>
-          {demo ? (
-            <Suspense fallback={<div className="p-8 text-muted-foreground">Loading…</div>}>
-              <demo.component key={demo.path} />
-            </Suspense>
-          ) : <Home />}
+          {/* The only scrolling area. On wide screens a demo fills it exactly and scrolls its own panels instead. */}
+          <div className="min-h-0 flex-1 overflow-y-auto" data-scroll-root>
+            {demo ? (
+              <Suspense fallback={<div className="p-8 text-muted-foreground">Loading…</div>}>
+                <demo.component key={demo.path} />
+              </Suspense>
+            ) : <Home />}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

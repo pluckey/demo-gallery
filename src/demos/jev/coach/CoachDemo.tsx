@@ -73,9 +73,9 @@ export default function CoachDemo() {
       intent="Watch a report get written, or write your own. Every time the writer pauses, Jev checks the text against what a good report covers and the list ticks off."
       how="One Jev call per pause asks about a dozen yes/no questions at once (does it say when, where, who, what they were doing…), in about a quarter of a second. Items tick at 70% sure and only show a suggestion when Jev is fairly sure something is missing, so the list doesn't flicker or nag. Injury questions only appear once an injury is mentioned. Jev never writes anything; the suggestions are fixed text."
     >
-      <section>
+      <section className="shrink-0">
         <StepLabel n={1}>Pick a story to watch, or write your own</StepLabel>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {rubric.scenarios.map((s, i) => (
             <ChunkyButton key={i} compact icon={Play} title={s.title} active={playing === i} onClick={() => watch(i)} />
           ))}
@@ -84,12 +84,13 @@ export default function CoachDemo() {
         </div>
       </section>
 
-      <section>
+      {/* Wide screens: the text box grows to fill the height and the checklist scrolls on its own. */}
+      <section className="flex flex-col lg:min-h-0 lg:flex-1">
         <StepLabel n={2}>See what's covered</StepLabel>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <div className="space-y-3">
+        <div className="grid gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+          <div className="flex flex-col gap-3 lg:min-h-0">
             <Textarea ref={box} value={text} onChange={(e) => { replay.current++; setText(e.target.value); }}
-              placeholder="What happened? Describe it in your own words…" className="min-h-60 rounded-2xl p-4 text-base leading-relaxed" />
+              placeholder="What happened? Describe it in your own words…" className="min-h-48 flex-1 resize-none rounded-2xl p-4 text-base leading-relaxed lg:min-h-0" />
             <Card className={cn("rounded-2xl border p-4 text-base",
               warnings[0] ? toneClass.bad : firstMissing && judged ? toneClass.warn : judged && covered === items.length ? toneClass.good : "text-muted-foreground")}>
               {warnings[0] ? <span><b>Heads up:</b> {warnings[0].nudge}</span>
@@ -103,7 +104,7 @@ export default function CoachDemo() {
             </p>
             {error && <Problem message={error} />}
           </div>
-          <Card className="gap-4 rounded-2xl p-5">
+          <Card className="gap-3 rounded-2xl p-4 lg:min-h-0 lg:overflow-y-auto">
             <div>
               <div className="mb-2 flex justify-between text-sm text-muted-foreground"><span>How usable is it?</span><span>{covered} of {items.length} covered</span></div>
               <ConfidenceBar value={meter?.score ?? 0} tone={!meter ? "neutral" : meter.score >= 0.75 ? "good" : meter.score >= 0.4 ? "warn" : "bad"} />

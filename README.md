@@ -8,6 +8,7 @@ npm install
 echo "OPENROUTER_API_KEY=sk-or-…" > .env     # git-ignored; or export the variable
 npm run dev                                   # http://localhost:8790
 npm test                                      # engine tests, no key needed
+npm run check:layout                          # every demo at 5 screen sizes, with npm run dev running
 npm run build && npm start                    # production: one Node server for the app and the API
 ```
 
@@ -34,12 +35,21 @@ sure it is, in about 0.2 seconds, for fractions of a cent)
 - `src/demos/jev/engine/` holds the pure decision engines (a cascade of typed questions, and the live coaching
   checklist), tested in `engine.test.ts`.
 
+## Layout rule
+
+The app is exactly one screen tall. On wide screens a demo fills it, and anything that can grow (a list of steps, a
+checklist) scrolls inside its own panel and follows the newest item, so nothing pushes the page off screen. On phones
+the same demo stacks into one column in reading order and scrolls to the result. `npm run check:layout` runs every
+demo at phone, tablet, small-laptop, laptop and monitor sizes and reports sideways overflow, page scrolling on
+desktop, or a result that ends up off screen.
+
 ## Adding a demo
 
 1. Make a folder under `src/demos/<category>/` with a component that uses the demo kit and calls `/api/jev/decide` or
    `/api/chat`.
 2. Add an entry to `src/demos/registry.ts` (and a category there if it's new).
-3. Keep it to a few big choices and one clear result.
+3. Keep it to a few big choices and one clear result, then run `npm run check:layout <name>` (add the demo to
+   `scripts/check-layout.mjs` with an example to click).
 
 ## License
 
