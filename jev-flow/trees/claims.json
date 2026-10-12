@@ -1,0 +1,168 @@
+{
+  "name": "Insurance claim intake triage",
+  "description": "A first notice of loss comes in; route it to the desk that should own it.",
+  "stateKey": "first_notice_of_loss",
+  "start": "line",
+  "nodes": {
+    "line": {
+      "ask": {
+        "type": "choice",
+        "instructions": "Which line of coverage does this claim fall under?",
+        "criteria": {
+          "auto": "A vehicle accident, vehicle damage or a stolen vehicle.",
+          "property": "Damage to a home or building or its contents: fire, water, wind, hail, theft from the property.",
+          "workers_comp": "An employee hurt or made ill while working.",
+          "liability": "Someone else says the insured caused them injury or damage, like a slip and fall at the insured's premises."
+        }
+      },
+      "routes": { "auto": "injury", "property": "cat_event", "workers_comp": "wc_severity", "liability": "litigation" },
+      "minConfidence": 0.6,
+      "unsure": "@adjuster"
+    },
+    "injury": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Was anyone hurt in the accident?",
+        "criteria": { "true": "A driver, passenger or pedestrian was injured, treated or complained of pain.", "false": "No one was hurt; vehicle damage only." }
+      },
+      "routes": { "yes": "injury_severity", "no": "auto_fraud" }
+    },
+    "injury_severity": {
+      "ask": {
+        "type": "score",
+        "instructions": "How serious is the worst injury?",
+        "criteria": ["Minor: soreness, no treatment or a single check-up.", "Moderate: ER visit, doctor or physical therapy.", "Severe: hospitalized, surgery, broken bones or a death."]
+      },
+      "routes": [{ "min": 1.5, "to": "@large_loss" }, { "to": "litigation" }]
+    },
+    "auto_fraud": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the auto claim show fraud red flags?",
+        "criteria": {
+          "true": "Red flags: a brand-new policy, keys left in the car, no police report, pressure for a quick cash settlement, an inconsistent story or late reporting.",
+          "false": "An ordinary, consistent account with nothing unusual."
+        }
+      },
+      "routes": { "yes": "@siu", "no": "auto_damage" },
+      "threshold": 0.6
+    },
+    "auto_damage": {
+      "ask": {
+        "type": "score",
+        "instructions": "How badly is the vehicle damaged?",
+        "criteria": ["Cosmetic: scratches, dents, a cracked bumper.", "Significant but drivable or repairable.", "Not drivable, totaled, burned or stolen."]
+      },
+      "routes": [{ "min": 1.5, "to": "@total_loss" }, { "to": "third_party" }]
+    },
+    "third_party": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Is someone else responsible for the loss, such as another driver, a contractor, a manufacturer or a neighbor?",
+        "criteria": { "true": "Another party caused it, for example rear-ended, ran a light, faulty work or a defective product.", "false": "No one else is clearly to blame." }
+      },
+      "routes": { "yes": "@subrogation", "no": "@fast_track" }
+    },
+    "cat_event": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Was the damage caused by a named storm, wildfire, flood or other widespread disaster?",
+        "criteria": { "true": "A hurricane, tornado outbreak, wildfire, regional flood or similar event hitting many homes.", "false": "A local, one-off event at this property." }
+      },
+      "routes": { "yes": "@cat_team", "no": "property_cause" }
+    },
+    "property_cause": {
+      "ask": {
+        "type": "choice",
+        "instructions": "What caused the property damage?",
+        "criteria": {
+          "fire": "Fire or smoke.",
+          "water": "Water: burst pipe, leak, appliance overflow.",
+          "theft": "Burglary, theft or vandalism.",
+          "weather": "Wind, hail, lightning or a fallen tree (not a widespread disaster).",
+          "other": "Anything else."
+        }
+      },
+      "routes": { "theft": "property_fraud", "*": "habitability" }
+    },
+    "property_fraud": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the theft claim show fraud red flags?",
+        "criteria": {
+          "true": "Red flags: no police report, a recently bought policy or added coverage, unusually expensive items without receipts, or a vague story.",
+          "false": "A police report was filed and the account is ordinary."
+        }
+      },
+      "routes": { "yes": "@siu", "no": "damage_amount" },
+      "threshold": 0.6
+    },
+    "habitability": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Is the home unlivable, so the family needs somewhere else to stay?",
+        "criteria": { "true": "The household is displaced: staying in a hotel or with relatives, no power, water or safe structure.", "false": "They can keep living there." }
+      },
+      "routes": { "yes": "@urgent_field", "no": "damage_amount" }
+    },
+    "damage_amount": {
+      "ask": {
+        "type": "score",
+        "instructions": "Roughly how large is the loss?",
+        "criteria": ["Small: under about $5,000.", "Medium: about $5,000 to $50,000.", "Large: over about $50,000."]
+      },
+      "routes": [{ "min": 1.5, "to": "@large_loss" }, { "min": 0.6, "to": "@adjuster" }, { "to": "third_party" }]
+    },
+    "wc_severity": {
+      "ask": {
+        "type": "score",
+        "instructions": "How serious is the work injury?",
+        "criteria": ["First aid only, back at work.", "Doctor visits, therapy or some days off work.", "Surgery, hospitalization, permanent injury or a death."]
+      },
+      "routes": [{ "min": 1.5, "to": "@nurse" }, { "min": 0.5, "to": "wc_doubt" }, { "to": "@fast_track" }]
+    },
+    "wc_doubt": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Is there reason to doubt the injury happened at work as described?",
+        "criteria": {
+          "true": "Reported late, first mentioned on a Monday, no witnesses, a story that changes, or a recent firing or layoff notice.",
+          "false": "Reported right away with witnesses or a clear account."
+        }
+      },
+      "routes": { "yes": "@siu", "no": "@adjuster" },
+      "minConfidence": 0.65,
+      "unsure": "@adjuster"
+    },
+    "litigation": {
+      "ask": {
+        "type": "noul",
+        "instructions": "Is a lawyer involved, or is there a lawsuit or demand letter?",
+        "criteria": { "true": "An attorney, a demand letter, a lawsuit or a threat to sue is mentioned.", "false": "No lawyer or legal action is mentioned." }
+      },
+      "routes": { "yes": "@legal", "no": "@adjuster" }
+    }
+  },
+  "outcomes": {
+    "fast_track": { "label": "Fast track", "tone": "good", "say": "Simple and clear: pay within 48 hours." },
+    "subrogation": { "label": "Pay + recover", "tone": "good", "say": "Pay the insured, then recover from the party at fault." },
+    "adjuster": { "label": "Desk adjuster", "tone": "neutral", "say": "Standard review by a desk adjuster." },
+    "total_loss": { "label": "Total-loss desk", "tone": "neutral", "say": "Value the vehicle and settle as a total loss." },
+    "urgent_field": { "label": "Field adjuster today", "tone": "warn", "say": "Family displaced: send a field adjuster and arrange temporary housing." },
+    "cat_team": { "label": "Catastrophe team", "tone": "warn", "say": "Part of a disaster: route to the CAT response team." },
+    "nurse": { "label": "Nurse case manager", "tone": "warn", "say": "Serious injury: assign a nurse case manager and set a large reserve." },
+    "large_loss": { "label": "Large-loss unit", "tone": "warn", "say": "High severity: senior adjuster and large-loss reserve." },
+    "siu": { "label": "Fraud investigation", "tone": "bad", "say": "Red flags: refer to the Special Investigations Unit before paying." },
+    "legal": { "label": "Defense counsel", "tone": "bad", "say": "Lawyer involved: assign litigation handling and defense counsel." }
+  },
+  "samples": [
+    "Insured was stopped at a red light on Westheimer when a pickup rear-ended her. Bumper and trunk are damaged but the car is drivable. Nobody was hurt. Police report filed and the other driver was cited.",
+    "Insured reports his 2019 Camry was stolen from his driveway last night. He bought the policy three weeks ago and says he left the keys inside. He is asking for a quick cash settlement.",
+    "Two-car collision at an intersection. Our driver was taken by ambulance with a broken leg and is in surgery now.",
+    "Kitchen fire started at the stove. Smoke damage throughout the first floor. The family of four is staying at a hotel; the house is not livable.",
+    "Pipe burst under the bathroom sink and damaged the vanity and some flooring. A plumber already fixed it; the repair estimate is $2,800.",
+    "Hurricane Delta tore part of the roof off and water is coming into the attic. The whole neighborhood has been without power since Tuesday.",
+    "Warehouse employee says he slipped on a wet floor last Friday but first reported it this Monday morning. No witnesses. He has lower back pain and wants to see a chiropractor.",
+    "A customer slipped on ice in our store parking lot and broke her wrist. We have received a letter from her attorney demanding $75,000."
+  ]
+}

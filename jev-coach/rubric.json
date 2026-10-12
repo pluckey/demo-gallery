@@ -1,0 +1,226 @@
+{
+  "name": "Incident report narrative",
+  "stateKey": "incident_narrative",
+  "minChars": 40,
+  "checks": [
+    {
+      "id": "when",
+      "label": "When it happened",
+      "form": "date",
+      "nudge": "Add when it happened: the date and roughly what time.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the narrative say when the incident happened?",
+        "criteria": {
+          "true": "Gives a date, a day or a time of day.",
+          "false": "Says nothing about when."
+        }
+      }
+    },
+    {
+      "id": "where",
+      "label": "Where exactly",
+      "form": "location",
+      "nudge": "Say exactly where: the site, building, area or aisle, not just the company.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the narrative say specifically where it happened?",
+        "criteria": {
+          "true": "Names a site, building, room, area, aisle, address or intersection.",
+          "false": "No place, or only a vague one like 'at work'."
+        }
+      }
+    },
+    {
+      "id": "who",
+      "label": "Who was involved",
+      "nudge": "Name who was involved, or at least their role (the injured worker, the driver).",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the narrative identify who was involved, by name or by role?",
+        "criteria": {
+          "true": "Names people or gives their roles, like 'forklift operator Mike Alvarez' or 'a customer'.",
+          "false": "Only pronouns or nobody identified."
+        }
+      }
+    },
+    {
+      "id": "activity",
+      "label": "What they were doing",
+      "nudge": "Describe the task or activity right before it happened.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it describe what the person was doing right before the incident?",
+        "criteria": {
+          "true": "Describes the task or activity underway, like restocking pallets or walking to the exit.",
+          "false": "Doesn't say what they were doing."
+        }
+      }
+    },
+    {
+      "id": "how",
+      "label": "How it happened",
+      "nudge": "Walk through the sequence: what happened first, what went wrong, how it ended.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it explain how the incident happened, step by step?",
+        "criteria": {
+          "true": "Explains the sequence of events and the mechanism, like slipped on fluid and landed on a wrist.",
+          "false": "Only states the result, like 'he got hurt'."
+        }
+      }
+    },
+    {
+      "id": "cause",
+      "label": "What contributed",
+      "nudge": "Mention any condition that contributed: a spill, missing guard, poor lighting, rushing.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it mention a condition or factor that contributed to the incident?",
+        "criteria": {
+          "true": "Names a hazard or contributing factor, like a leak, ice, a broken step, glare or a missing guard.",
+          "false": "No contributing factor mentioned."
+        }
+      }
+    },
+    {
+      "id": "injured",
+      "gate": true,
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the narrative say that someone was injured?",
+        "criteria": {
+          "true": "Someone was hurt, injured or complained of pain.",
+          "false": "No injury, or it says no one was hurt."
+        }
+      },
+      "hint": "If someone was hurt"
+    },
+    {
+      "id": "body_part",
+      "label": "Which body part",
+      "showIf": "injured",
+      "nudge": "Say which body part was hurt, and which side (left wrist, lower back).",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it say which body part was injured?",
+        "criteria": {
+          "true": "Names the body part, like wrist, knee, lower back or head.",
+          "false": "Doesn't say what part of the body."
+        }
+      }
+    },
+    {
+      "id": "treatment",
+      "label": "Care given",
+      "showIf": "injured",
+      "nudge": "Say what care was given: first aid, clinic, ER, or that none was needed.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it say what medical care or first aid was given?",
+        "criteria": {
+          "true": "Mentions first aid, a clinic, ER, ambulance, or that care was declined.",
+          "false": "Nothing about care or treatment."
+        }
+      }
+    },
+    {
+      "id": "witnesses",
+      "label": "Witnesses",
+      "nudge": "Name any witnesses, or say there were none.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it name witnesses or say there were none?",
+        "criteria": {
+          "true": "Names someone who saw it, or says there were no witnesses.",
+          "false": "Witnesses aren't mentioned."
+        }
+      }
+    },
+    {
+      "id": "actions",
+      "label": "What was done after",
+      "nudge": "Describe what was done right after: area secured, supervisor told, equipment tagged out.",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does it describe what was done right after the incident?",
+        "criteria": {
+          "true": "Describes follow-up actions, like cleaning up, blocking an area, notifying a supervisor or calling police.",
+          "false": "Nothing about what happened afterward."
+        }
+      }
+    },
+    {
+      "id": "blame",
+      "label": "Blame or opinion",
+      "bad": true,
+      "nudge": "Stick to what happened. Leave out blame and guesses about attitude (careless, not paying attention).",
+      "ask": {
+        "type": "noul",
+        "instructions": "Does the narrative assign blame or give opinions instead of facts?",
+        "criteria": {
+          "true": "Blames someone or judges them, like 'careless', 'not watching', 'his own fault', 'lazy'.",
+          "false": "Sticks to observable facts."
+        }
+      }
+    },
+    {
+      "id": "specific",
+      "meter": true,
+      "ask": {
+        "type": "score",
+        "instructions": "How factual and specific is this narrative overall?",
+        "criteria": [
+          "Vague: a sentence or two with few facts.",
+          "Some useful facts, with clear gaps.",
+          "Specific and factual: an adjuster could act on it."
+        ]
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Warehouse slip (workers' comp)",
+      "steps": [
+        "Mike got hurt in the warehouse.",
+        {
+          "remove": "Mike got hurt in the warehouse."
+        },
+        "On Tuesday around 2:30 pm, Mike Alvarez, a forklift operator, was restocking pallets in aisle 7 of Warehouse B.",
+        " He stepped off the forklift onto hydraulic fluid that had leaked from the lift, slipped, and landed on his left wrist.",
+        " The leak had been reported the day before, but the area was never blocked off.",
+        " Shift lead Dana Reyes saw it happen.",
+        " He got an ice pack on site and was driven to the Concentra clinic, where they X-rayed his wrist.",
+        " We blocked off the aisle, cleaned up the fluid and tagged the forklift out of service."
+      ]
+    },
+    {
+      "name": "Customer fall (liability)",
+      "steps": [
+        "A lady fell near the front of the store. She probably wasn't watching where she was going.",
+        {
+          "remove": " She probably wasn't watching where she was going."
+        },
+        " It was about 10:15 am on March 3 at our Main St. location, by the entrance mats.",
+        " The customer, Joan Pierce, was walking in from the parking lot when her foot caught the curled edge of a rain mat and she fell forward onto her knees.",
+        " She said her right knee hurt; a cashier brought her a chair and ice, and she declined an ambulance.",
+        " Cashier Luis Ortega saw the fall.",
+        " The manager replaced the mat and took photos of the area."
+      ]
+    },
+    {
+      "name": "Fleet fender-bender (auto)",
+      "steps": [
+        "Truck got hit.",
+        {
+          "remove": "Truck got hit."
+        },
+        "On June 9 at about 7:40 am, our delivery driver Sam Ortiz was stopped at the red light at Main and 5th in box truck 214.",
+        " A sedan behind him didn't stop in time and hit the rear bumper.",
+        " The road was wet from rain. No one was hurt.",
+        " A pedestrian, Ana Lim, saw it and gave her number.",
+        " Sam called police, swapped insurance with the other driver and photographed both vehicles."
+      ]
+    }
+  ]
+}

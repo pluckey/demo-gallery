@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jev Cascade</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%233b5bdb%22/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #fff; --ink: #1c1b19; --ink2: #6b6860; --line: #e4e1d8; --accent: #3b5bdb; --accent-soft: #e5eafc;
+    --good: #2b8a3e; --good-soft: #e3f4e6; --warn: #b8640b; --warn-soft: #fdf0dc; --bad: #c92a2a; --bad-soft: #fde6e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151514; --card: #1f1f1d; --ink: #f1efe9; --ink2: #a29f96; --line: #33322e; --accent: #8ea6ff; --accent-soft: #252c47;
+      --good: #69db7c; --good-soft: #1d3322; --warn: #ffc069; --warn-soft: #3a2c16; --bad: #ff8787; --bad-soft: #3d1f1f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 -apple-system, system-ui, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 24px; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+  h1 { font-size: 22px; margin: 0 0 2px; } .sub { color: var(--ink2); margin: 0 0 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--bg); color: var(--ink); font: inherit; resize: vertical; }
+  #msg { min-height: 110px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip { border: 1px solid var(--line); background: var(--card); color: var(--ink2); border-radius: 999px; padding: 3px 10px; font-size: 13px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip:hover { color: var(--ink); border-color: var(--ink2); }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--ink2); padding: 7px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .go { margin-left: auto; border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+  .go:disabled { opacity: .5; cursor: default; }
+  .hint { color: var(--ink2); font-size: 13px; margin: 8px 0 0; }
+  .verdict { margin-top: 16px; border-radius: 14px; padding: 16px; display: none; }
+  .verdict.on { display: block; } .verdict b { font-size: 20px; display: block; }
+  .tone-good { background: var(--good-soft); color: var(--good); } .tone-warn { background: var(--warn-soft); color: var(--warn); } .tone-bad { background: var(--bad-soft); color: var(--bad); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
+  .stat div { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; } .stat span { color: var(--ink2); font-size: 12px; }
+  .err { color: var(--bad); font-size: 13px; margin-top: 8px; white-space: pre-wrap; }
+  .nodes { display: grid; gap: 10px; }
+  .node { transition: opacity .2s; } .node.dim { opacity: .45; } .node.hit { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .node header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+  .step { background: var(--accent); color: #fff; border-radius: 999px; width: 22px; height: 22px; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .id { font-weight: 700; font-family: ui-monospace, monospace; font-size: 13px; }
+  .type { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+  .gate { font-size: 12px; color: var(--ink2); margin-left: auto; }
+  .q { margin: 0 0 8px; }
+  .routes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .route { font-size: 12px; border-radius: 6px; padding: 2px 7px; background: var(--bg); color: var(--ink2); font-family: ui-monospace, monospace; }
+  .route.taken { background: var(--accent); color: #fff; }
+  .route.final { border: 1px dashed var(--line); }
+  .ans { margin: 8px 0; display: grid; gap: 4px; }
+  .bar { display: grid; grid-template-columns: 120px 1fr 44px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink2); }
+  .bar .t { height: 8px; background: var(--bg); border-radius: 4px; position: relative; overflow: hidden; }
+  .bar .f { position: absolute; inset: 0 auto 0 0; background: var(--ink2); border-radius: 4px; opacity: .5; }
+  .bar.top .f { background: var(--accent); opacity: 1; } .bar.top { color: var(--ink); font-weight: 600; }
+  .bar span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .tick { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); }
+  .unsure { font-size: 12px; color: var(--warn); font-weight: 600; }
+  .outs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .out { border-radius: 10px; padding: 8px 12px; font-weight: 600; font-size: 14px; opacity: .45; }
+  .out.hit { opacity: 1; box-shadow: 0 0 0 2px currentColor; }
+  details { margin-top: 16px; } summary { cursor: pointer; color: var(--ink2); }
+  #spec { min-height: 360px; font: 12px/1.4 ui-monospace, monospace; margin-top: 8px; }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>Jev cascade</h1>
+    <p class="sub" id="name"></p>
+    <div class="card">
+      <textarea id="msg" placeholder="Paste a text message…"></textarea>
+      <div class="chips" id="samples"></div>
+      <div class="row">
+        <div class="seg" id="mode">
+          <button data-m="step" class="on" title="One call per node on the path">Step by step</button>
+          <button data-m="spec" title="One call asking every node at once, then walk locally">One call</button>
+        </div>
+        <button class="go" id="go">Check</button>
+      </div>
+      <p class="hint" id="modehint"></p>
+      <div class="err" id="runerr"></div>
+    </div>
+    <div class="verdict" id="verdict"><b></b><span></span></div>
+    <div class="stats" id="stats" hidden>
+      <div class="stat"><div id="s-calls">–</div><span>calls</span></div>
+      <div class="stat"><div id="s-asked">–</div><span>questions</span></div>
+      <div class="stat"><div id="s-ms">–</div><span>time</span></div>
+      <div class="stat"><div id="s-cost">–</div><span>cost</span></div>
+    </div>
+    <details>
+      <summary>Edit the cascade</summary>
+      <textarea id="spec" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="apply">Apply</button>
+        <button class="btn" id="reset">Reset to default</button>
+      </div>
+      <div class="err" id="specerr"></div>
+    </details>
+  </section>
+  <section>
+    <div class="nodes" id="nodes"></div>
+  </section>
+</main>
+<script type="module">
+import { run, validate, isOutcome } from "./cascade.js";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const DEFAULT = await (await fetch("./scam.json")).json();
+let spec = DEFAULT, mode = "step";
+try { const saved = JSON.parse(store.get("jev-cascade-spec")); if (saved && !validate(saved).length) spec = saved; } catch {}
+
+async function ask(state, questions) {
+  const r = await fetch("/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ state, questions }) });
+  const out = await r.json();
+  if (!r.ok) throw new Error(out.error ?? `error ${r.status}`);
+  return out;
+}
+
+function routesOf(id, n) {
+  // [route key as the engine reports it in `via`, what to show, target]
+  const r = Array.isArray(n.routes) ? n.routes.map((x, i) => [i, x.min === undefined ? "else" : `≥ ${x.min}`, x.to]) : Object.entries(n.routes).map(([k, to]) => [k, k, to]);
+  if (n.unsure) r.push(["unsure", `sure < ${n.minConfidence}`, n.unsure]);
+  return r;
+}
+
+function answerView(n, a, d) {
+  if (!a) return "";
+  const bar = (label, p, top, tick) => `<div class="bar${top ? " top" : ""}"><span>${esc(label)}</span><div class="t"><div class="f" style="width:${(p * 100).toFixed(1)}%"></div>${tick === undefined ? "" : `<div class="tick" style="left:${tick * 100}%"></div>`}</div><span>${Math.round(p * 100)}%</span></div>`;
+  let h = "";
+  if (n.ask.type === "choice") h = Object.entries(a.probabilities ?? {}).sort((x, y) => y[1] - x[1]).map(([k, p]) => bar(k, p, k === a.choice)).join("");
+  else if (n.ask.type === "noul") h = bar("yes", a.noul, true, n.threshold ?? 0.5);
+  else h = n.ask.criteria.map((c, i) => bar(c.length > 18 ? c.slice(0, 17) + "…" : c, a.probabilities?.[String(i)] ?? 0, Math.round(a.score) === i)).join("") + `<div class="hint">score ${a.score.toFixed(2)} of ${n.ask.criteria.length - 1}</div>`;
+  return `<div class="ans">${h}${d.unsure ? `<div class="unsure">Only ${Math.round(d.confidence * 100)}% sure → ${esc(d.to)}</div>` : ""}</div>`;
+}
+
+function draw(result) {
+  $("name").textContent = spec.name ?? "";
+  $("samples").innerHTML = (spec.samples ?? []).map((s, i) => `<button class="chip" data-i="${i}" title="${esc(s)}">${esc(s)}</button>`).join("");
+  const steps = Object.fromEntries((result?.trace ?? []).map((t, i) => [t.id, { ...t, n: i + 1 }]));
+  $("nodes").innerHTML = Object.entries(spec.nodes).map(([id, n]) => {
+    const t = steps[id];
+    return `<div class="card node${result ? (t ? " hit" : " dim") : ""}">
+      <header>${t ? `<span class="step">${t.n}</span>` : ""}<span class="id">${esc(id)}</span><span class="type">${n.ask.type}</span>
+        ${n.minConfidence !== undefined ? `<span class="gate">needs ${Math.round(n.minConfidence * 100)}% sure</span>` : ""}</header>
+      <p class="q">${esc(n.ask.instructions)}</p>
+      ${t ? answerView(n, t.answer, t) : ""}
+      <div class="routes">${routesOf(id, n).map(([key, k, to]) => `<span class="route${isOutcome(to) ? " final" : ""}${t?.via === key ? " taken" : ""}">${esc(k)} → ${esc(to)}</span>`).join("")}</div>
+    </div>`;
+  }).join("") + `<div class="outs">${Object.entries(spec.outcomes).map(([k, o]) => `<span class="out tone-${o.tone}${result?.outcome === k ? " hit" : ""}">@${esc(k)} · ${esc(o.label)}</span>`).join("")}</div>`;
+  $("spec").value = JSON.stringify(spec, null, 2);
+  $("modehint").textContent = mode === "step"
+    ? "Asks one node at a time and only walks the path it needs."
+    : "Asks every reachable node in a single call (Jev answers them in parallel), then walks the path locally.";
+}
+
+$("samples").onclick = (e) => { const b = e.target.closest(".chip"); if (b) { $("msg").value = spec.samples[b.dataset.i]; check(); } };
+$("mode").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  mode = b.dataset.m; [...$("mode").children].forEach((x) => x.classList.toggle("on", x === b)); draw();
+};
+$("go").onclick = () => check();
+$("apply").onclick = () => {
+  try {
+    const s = JSON.parse($("spec").value), errs = validate(s);
+    $("specerr").textContent = errs.join("\n");
+    if (!errs.length) { spec = s; store.set("jev-cascade-spec", JSON.stringify(s)); draw(); }
+  } catch (e) { $("specerr").textContent = e.message; }
+};
+$("reset").onclick = () => { spec = DEFAULT; store.set("jev-cascade-spec", ""); $("specerr").textContent = ""; draw(); };
+
+async function check() {
+  const text = $("msg").value.trim(); if (!text) return;
+  $("go").disabled = true; $("runerr").textContent = ""; $("go").textContent = "Checking…";
+  const started = performance.now();
+  try {
+    const r = await run(spec, { [spec.stateKey ?? "input"]: text }, ask, { speculative: mode === "spec" });
+    const o = spec.outcomes[r.outcome];
+    $("verdict").className = `verdict on tone-${o.tone}`;
+    $("verdict").querySelector("b").textContent = o.label;
+    $("verdict").querySelector("span").textContent = o.say ?? "";
+    $("stats").hidden = false;
+    $("s-calls").textContent = r.calls; $("s-asked").textContent = r.asked;
+    $("s-ms").textContent = `${Math.round(performance.now() - started)} ms`;
+    $("s-cost").textContent = `$${r.cost.toFixed(5)}`;
+    draw(r);
+  } catch (e) { $("runerr").textContent = e.message; }
+  $("go").disabled = false; $("go").textContent = "Check";
+}
+
+draw();
+</script>
+</body>
+</html>
